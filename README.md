@@ -1,0 +1,1 @@
+# VANZA-STICKER
