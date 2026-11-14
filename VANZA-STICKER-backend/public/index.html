@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VANZA STICKER</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:22px;background:#07110d;color:#f5fff8;font-family:Arial,sans-serif}
+header{text-align:center;padding:25px}.logo{font-size:52px;font-weight:900;color:#20df87}
+.card{background:#122019;border:1px solid #294936;border-radius:18px;padding:20px;margin:18px 0}
+p{color:#aab8ae;line-height:1.5}input{width:100%;padding:14px;margin:10px 0;background:#07110d;color:white;border:1px solid #34533e;border-radius:10px}
+button{width:100%;padding:15px;margin-top:10px;border:0;border-radius:10px;background:#20df87;color:#062014;font-weight:bold}
+button:disabled{opacity:.4}.status{color:#20df87;font-size:14px}.preview{text-align:center}.preview img{max-width:220px;max-height:220px;object-fit:contain}
+</style>
+</head>
+<body>
+<header><div class="logo">V</div><h1>VANZA STICKER</h1><p>TIKTOK STICKER TO WHATSAPP</p></header>
+<section class="card">
+<h3>🎨 KONVERSI GAMBAR</h3>
+<p>Pilih gambar yang sudah tersimpan di HP. Backend akan mengubahnya menjadi WebP 512 × 512.</p>
+<input id="file" type="file" accept="image/png,image/jpeg,image/webp">
+<div class="preview" id="preview"></div>
+<button id="convert" disabled>KONVERSI & DOWNLOAD</button>
+<p class="status" id="status"></p>
+</section>
+<section class="card">
+<h3>🔗 Tautan TikTok</h3>
+<input id="link" type="url" placeholder="Tempel tautan TikTok">
+<button id="check">PERIKSA TAUTAN</button>
+<p class="status" id="linkStatus"></p>
+<p>Catatan: tautan komentar TikTok tidak otomatis memberikan akses ke file gambar stiker. Fitur mengambil stiker langsung dari komentar belum tersedia di tahap ini.</p>
+</section>
+<script>
+const file=document.getElementById('file'), btn=document.getElementById('convert');
+let selected=null, previewUrl=null;
+file.addEventListener('change',()=>{
+ selected=file.files[0]||null;btn.disabled=!selected;
+ const box=document.getElementById('preview');box.innerHTML='';
+ if(previewUrl)URL.revokeObjectURL(previewUrl);
+ if(selected){previewUrl=URL.createObjectURL(selected);const img=document.createElement('img');img.src=previewUrl;box.appendChild(img);}
+ document.getElementById('status').textContent=selected?'Gambar siap dikonversi.':'';
+});
+btn.addEventListener('click',async()=>{
+ if(!selected)return;btn.disabled=true;
+ const status=document.getElementById('status');status.textContent='Sedang mengonversi...';
+ try{
+  const data=new FormData();data.append('sticker',selected);
+  const r=await fetch('/api/convert',{method:'POST',body:data});
+  if(!r.ok){const e=await r.json();throw new Error(e.error||'Konversi gagal');}
+  const blob=await r.blob(),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='vanza-sticker.webp';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),3000);
+  status.textContent='Berhasil! File WebP sudah diunduh.';
+ }catch(e){status.textContent='Gagal: '+e.message+'. Pastikan website dibuka dari server backend.';}
+ finally{btn.disabled=false;}
+});
+document.getElementById('check').addEventListener('click',()=>{
+ const s=document.getElementById('linkStatus');
+ try{const u=new URL(document.getElementById('link').value.trim());if(!/(^|\.)tiktok\.com$/i.test(u.hostname))throw 0;s.textContent='Format tautan dikenali, tetapi belum bisa mengambil gambar komentar otomatis.';}
+ catch(e){s.textContent='Masukkan tautan TikTok yang valid.';}
+});
+</script>
+</body></html>
